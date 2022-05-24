@@ -9,7 +9,10 @@
 #include "soc/rtc_cntl_reg.h"  // Disable brownout problems
 #include "driver/rtc_io.h"
 #include <EEPROM.h>            // read and write from flash memory
+#include <Preferences.h>       // alternative to EEPROM library
 #include <WiFi.h>
+
+Preferences preferences;
 
 void userSetup(BluetoothSerial SerialBT, int* cameraCaptureFreq, int* pictureNumber, struct tm tm){
 
@@ -29,7 +32,7 @@ String btTemp_str;
     }
     else {
       SerialBT.printf("Camera Freq Set To %d Minutes\n", btTemp_int);
-      *cameraCaptureFreq = MICROMINUTECONST * btTemp_int;
+      *cameraCaptureFreq = MICROMINUTECONST * btTemp_int - 5000;
       exitflag = true;
     }
   }
@@ -46,14 +49,14 @@ String btTemp_str;
       SerialBT.println("Please Enter a Valid Picture Index: ");
     }
     else if(btTemp_int == 0) {
-      SerialBT.printf("Camera index starting from last picture taken: %d\n", EEPROM.read(0) + 1);
+      SerialBT.printf("Camera index starting from last picture taken: %d\n", preferences.getInt("pic-num", 0) + 1);
       exitflag = true;
     }
     else {
       SerialBT.printf("Camera index starting from: %d\n", btTemp_int);
       *pictureNumber = btTemp_int;
-      EEPROM.write(0, *pictureNumber);
-      EEPROM.commit();
+      preferences.putInt("pic-num", *pictureNumber);
+      //EEPROM.commit();
       exitflag = true;
     }
   }
@@ -198,6 +201,8 @@ void setup() {
   Serial.setDebugOutput(true);
   Serial.println();
 
+  preferences.begin("pic-num", false);
+
   bool nosd_flag = false;
   bool sdfail_flag = false;
   bool nocam_flag = false;
@@ -234,9 +239,9 @@ void setup() {
   config.pixel_format = PIXFORMAT_JPEG;
   
   if(psramFound()){
-    config.frame_size = FRAMESIZE_XGA; // FRAMESIZE_ + QVGA|CIF|VGA|SVGA|XGA|SXGA|UXGA
+    config.frame_size = FRAMESIZE_SXGA; // FRAMESIZE_ + QVGA|CIF|VGA|SVGA|XGA|SXGA|UXGA
     config.jpeg_quality = 10;
-    config.fb_count = 2;
+    config.fb_count = 1;
   } else {
     config.frame_size = FRAMESIZE_SVGA;
     config.jpeg_quality = 12;
@@ -306,8 +311,8 @@ void setup() {
   }
 
   // initialize EEPROM with predefined size
-  EEPROM.begin(EEPROM_SIZE);
-  pictureNumber = EEPROM.read(0) + 1;
+  //EEPROM.begin(EEPROM_SIZE);
+  pictureNumber = preferences.getInt("pic-num", 0) + 1;
 
   // Turns off the ESP32-CAM white on-board LED (flash) connected to GPIO 4
   pinMode(4, OUTPUT);
@@ -323,7 +328,7 @@ void setup() {
 void loop() {
   // Take Picture with Camera
   digitalWrite(OBLED, LOW);
-  delay(5000);
+  delay(5000); // allow time for AWB and AE
   fb = esp_camera_fb_get();  
   if(!fb) {
     Serial.println("Camera capture failed");
@@ -350,8 +355,9 @@ void loop() {
   else {
     file.write(fb->buf, fb->len); // payload (image), payload length
     Serial.printf("Saved file to path: %s\n", path.c_str());
-    EEPROM.write(0, pictureNumber);
-    EEPROM.commit();
+    preferences.putInt("pic-num", pictureNumber);
+    //EEPROM.writeInt(0, pictureNumber);
+    //EEPROM.commit();
   }
   file.close();
   esp_camera_fb_return(fb);

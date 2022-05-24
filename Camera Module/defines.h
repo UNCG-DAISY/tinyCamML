@@ -1,5 +1,5 @@
 // Define the number of bytes you want to access
-#define EEPROM_SIZE 1
+#define EEPROM_SIZE 2
 // Pin definition for CAMERA_MODEL_AI_THINKER
 #define CAMERA_MODEL_AI_THINKER
 #include "camera_pins.h"
