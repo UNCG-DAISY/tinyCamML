@@ -1,2 +1,2 @@
-# tinyCAML
+# tinyCamML
 flooding on roadways with TinyML
