@@ -59,3 +59,5 @@ Currently it is a manual process. Future version of this util will allow a user 
 Included in this repository is code for the ESP32-CAM that will capture and save images to a microSD based on a user-defined interval.
 
 To use, upload the code to the ESP32-CAM and connect using a Bluetooth Serial app on a smart phone. From here you can configure the date&time, capture interval, and image index. 
+
+### [Presentation](https://docs.google.com/presentation/d/1H9vci88QYEPyQeXLo3Sxy1dpsh4Yb4WI/)
