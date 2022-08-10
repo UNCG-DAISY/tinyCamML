@@ -1,0 +1,3 @@
+# ignoring all images contained in data folders
+ML/data/segmentation/*
+ML/data/classification/*
